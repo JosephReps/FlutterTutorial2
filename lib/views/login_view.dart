@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:tutorial_flutter_2/constants/routes.dart';
 import 'package:tutorial_flutter_2/firebase_options.dart';
+import 'package:tutorial_flutter_2/utilities/show_error_dialog.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -62,25 +64,32 @@ class _LoginViewState extends State<LoginView> {
                   );
 
                   try {
-                    final userCredential =
-                        await FirebaseAuth.instance.signInWithEmailAndPassword(
+                    await FirebaseAuth.instance.signInWithEmailAndPassword(
                       email: email,
                       password: password,
                     );
-                    print(userCredential);
                     if (!mounted) return;
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                      '/home/',
-                      (route) => false,
-                    );
-                  } on FirebaseAuthException catch (e) {
-                    if (e.code == 'wrong-password') {
-                      print("Wrong password");
-                    } else if (e.code == 'user-not-found') {
-                      print("User not found");
-                    } else {
-                      print(e.code);
+
+                    if (FirebaseAuth.instance.currentUser?.emailVerified ??
+                        false) {
+                      Navigator.of(context).pushNamedAndRemoveUntil(
+                        homeRoute,
+                        (route) => false,
+                      );
                     }
+                  } on FirebaseAuthException catch (e) {
+                    if (!mounted) return;
+                    if (e.code == 'wrong-password') {
+                      await showErrorDialog(context, "Invalid credentials.");
+                    } else if (e.code == 'user-not-found') {
+                      await showErrorDialog(context, "User not found.");
+                    } else {
+                      await showErrorDialog(
+                          context, e.message ?? "An unknown error occured");
+                    }
+                  } catch (e) {
+                    if (!mounted) return;
+                    await showErrorDialog(context, e.toString());
                   }
                 },
                 child: const Text("Login"),
@@ -88,7 +97,7 @@ class _LoginViewState extends State<LoginView> {
               TextButton(
                 onPressed: () {
                   Navigator.of(context)
-                      .pushNamedAndRemoveUntil('/register/', (route) => false);
+                      .pushNamedAndRemoveUntil(registerRoute, (route) => false);
                 },
                 child: const Text("Register here"),
               )
