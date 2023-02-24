@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:tutorial_flutter_2/firebase_options.dart';
+import 'package:tutorial_flutter_2/views/home_view.dart';
 import 'package:tutorial_flutter_2/views/login_view.dart';
 import 'package:tutorial_flutter_2/views/register_view.dart';
 import 'package:tutorial_flutter_2/views/verify_email_view.dart';
@@ -18,6 +19,7 @@ void main() async {
     routes: {
       '/login/': (context) => const LoginView(),
       '/register/': (context) => const RegisterView(),
+      '/home/': (context) => const HomeView()
     },
   ));
 }
@@ -35,11 +37,13 @@ class HomePage extends StatelessWidget {
         switch (snapshot.connectionState) {
           case ConnectionState.done:
             final user = FirebaseAuth.instance.currentUser;
-            if (user?.emailVerified ?? false) {
-            } else {
+            if (user == null) {
+              return const LoginView();
+            } else if (!user.emailVerified) {
               return const VerifyEmailView();
+            } else {
+              return const HomeView();
             }
-            return const Text("Done (verified).");
           default:
             return const Center(child: CircularProgressIndicator());
         }
